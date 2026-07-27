@@ -1,0 +1,47 @@
+<% content_for :title, current_page.title %>
+
+<article class="db-article">
+  <% if breadcrumb_pages_for(current_page).any? %>
+    <nav aria-label="Breadcrumb" class="db-breadcrumbs">
+      <% breadcrumb_pages_for(current_page).each do |page| %>
+        <%= link_to page.title, designbook_page_path_for(page) %>
+        <span>/</span>
+      <% end %>
+      <span><%= current_page.title %></span>
+    </nav>
+  <% end %>
+
+  <header class="db-article-header">
+    <h1><%= current_page.title %></h1>
+  </header>
+
+  <div class="db-markdown">
+    <%= @rendered_html %>
+  </div>
+
+  <% if backlinks.any? %>
+    <section class="db-backlinks" aria-label="Backlinks">
+      <h2>Linked from</h2>
+      <ul>
+        <% backlinks.each do |page| %>
+          <li><%= link_to page.title, designbook_page_path_for(page) %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <nav class="db-prev-next" aria-label="Previous and next page">
+    <div>
+      <% if previous_page %>
+        <p class="db-prev-next-label">Previous</p>
+        <%= link_to previous_page.title, designbook_page_path_for(previous_page) %>
+      <% end %>
+    </div>
+    <div class="db-next-slot">
+      <% if next_page %>
+        <p class="db-prev-next-label">Next</p>
+        <%= link_to next_page.title, designbook_page_path_for(next_page) %>
+      <% end %>
+    </div>
+  </nav>
+</article>

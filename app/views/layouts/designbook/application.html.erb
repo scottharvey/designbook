@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= content_for?(:title) ? yield(:title) : "Designbook" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%= yield :head %>
+
+  <%= stylesheet_link_tag "designbook/application", media: "all" %>
+</head>
+<body class="db-body">
+<main class="db-shell">
+  <aside class="db-sidebar">
+    <p class="db-sidebar-title">Designbook</p>
+
+    <%= form_with url: designbook.search_path, method: :get, local: true, class: "db-search-form" do |form| %>
+      <%= form.search_field :q, value: params[:q], placeholder: "Search docs", class: "db-search-input", aria: { label: "Search designbook" } %>
+    <% end %>
+
+    <% catalog.section_tree.each do |section, pages| %>
+      <section class="db-nav-section">
+        <p class="db-nav-heading"><%= section_title(section) %></p>
+        <ul class="db-nav-list">
+          <% pages.each do |page| %>
+            <li>
+              <%= link_to page.title, designbook_page_path_for(page), class: "db-nav-link#{page == current_page ? " is-active" : ""}" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+  </aside>
+
+  <section class="db-content">
+    <%= yield %>
+  </section>
+</main>
+</body>
+</html>
