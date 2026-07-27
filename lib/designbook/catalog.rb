@@ -17,12 +17,10 @@ module Designbook
     end
 
     def build
-      docs_root = Designbook.docs_root
-      return self unless docs_root.exist?
+      load_docs_from(Designbook.bundled_docs_root)
 
-      docs_root.glob("**/*.md").sort.each do |path|
-        add_page(path, docs_root)
-      end
+      docs_root = Designbook.docs_root
+      load_docs_from(docs_root) if docs_root.exist?
 
       @pages.sort_by! { |page| sort_key_for(page) }
       build_link_graph!
@@ -36,6 +34,10 @@ module Designbook
 
     def ordered_pages
       pages
+    end
+
+    def reading_pages
+      pages.reject { |page| page.section == "help" }
     end
 
     def previous_page_for(slug)
@@ -73,7 +75,15 @@ module Designbook
 
     private
 
-    def add_page(path, docs_root)
+    def load_docs_from(docs_root)
+      return unless docs_root.exist?
+
+      docs_root.glob("**/*.md").sort.each do |path|
+        add_page(path, docs_root, replace_existing: true)
+      end
+    end
+
+    def add_page(path, docs_root, replace_existing: false)
       markdown = path.read
       metadata, content = extract_frontmatter(markdown, path)
 
@@ -88,13 +98,20 @@ module Designbook
       order = metadata["order"]
       order = Integer(order, exception: false)
 
-      @pages << Page.new(
+      page = Page.new(
         source_path: path.to_s,
         slug: slug,
         title: title,
         order: order,
         body_markdown: content
       )
+
+      existing_index = @pages.index { |existing| existing.slug == slug }
+      if existing_index
+        @pages[existing_index] = page if replace_existing
+      else
+        @pages << page
+      end
     rescue Psych::SyntaxError => e
       raise_invalid_document!(path, "Invalid YAML frontmatter: #{e.message}")
     end
@@ -136,14 +153,16 @@ module Designbook
     def page_at_offset(slug, offset)
       page = page_for_slug(slug)
       return nil unless page
+      return nil if page.section == "help"
 
-      index = pages.index(page)
+      sequence = reading_pages
+      index = sequence.index(page)
       return nil unless index
 
       target_index = index + offset
-      return nil if target_index.negative? || target_index >= pages.length
+      return nil if target_index.negative? || target_index >= sequence.length
 
-      pages[target_index]
+      sequence[target_index]
     end
 
     def sort_key_for(page)

@@ -1,6 +1,6 @@
 Designbook.configure do |config|
-  # This path is combined with the directive argument.
-  # Example: :::component button/default
-  #          /lookbook/inspect/button/default
-  config.lookbook_preview_base_path = "/lookbook/inspect"
+  # Use Lookbook's embed path (component only), not /inspect (full Lookbook UI).
+  # Example: :::component ui/badge
+  #          /lookbook/embed/ui/badge
+  config.lookbook_preview_base_path = "/lookbook/embed"
 end

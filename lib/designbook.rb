@@ -19,7 +19,7 @@ module Designbook
       @mount_path = "/designbook"
       @authenticate = nil
       @parent_controller = "ActionController::Base"
-      @lookbook_preview_base_path = "/lookbook/inspect"
+      @lookbook_preview_base_path = "/lookbook/embed"
     end
   end
 
@@ -49,6 +49,10 @@ module Designbook
     def docs_root
       root = Pathname.new(configuration.docs_path)
       root.absolute? ? root : Rails.root.join(root)
+    end
+
+    def bundled_docs_root
+      Pathname.new(File.expand_path("designbook/bundled_docs", __dir__))
     end
 
     def register_directive(name, &block)

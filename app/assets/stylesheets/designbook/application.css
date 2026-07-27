@@ -66,6 +66,23 @@
   font-weight: 600;
 }
 
+.db-sidebar-help {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.db-sidebar-help-link {
+  color: #8a8a8e;
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.db-sidebar-help-link:hover,
+.db-sidebar-help-link.is-active {
+  color: #4b5563;
+}
+
 .db-content {
   padding: 36px 48px;
 }
@@ -183,10 +200,13 @@
   background: #fff;
 }
 
-.db-component-preview iframe {
+.db-component-preview iframe.db-preview-frame {
   width: 100%;
-  min-height: 260px;
+  display: block;
+  min-height: 120px;
+  height: 120px;
   border: 0;
+  overflow: hidden;
 }
 
 .db-backlinks {

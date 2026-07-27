@@ -1,0 +1,68 @@
+# Bundler
+/.bundle/
+/vendor/bundle
+/vendor/cache
+
+# Ruby / gem build artifacts
+/*.gem
+/pkg/
+/doc/
+/.yardoc/
+/_yardoc/
+/rdoc/
+
+# Test / coverage
+/coverage/
+/.rspec_status
+/spec/reports/
+/test/reports/
+/tmp/
+/log/
+*.log
+
+# Dummy app runtime
+/spec/dummy/log/*
+/spec/dummy/tmp/*
+/spec/dummy/storage/*
+/spec/dummy/db/*.sqlite3
+/spec/dummy/db/*.sqlite3-*
+/spec/dummy/public/assets/
+/spec/dummy/public/packs/
+/spec/dummy/public/packs-test/
+/spec/dummy/node_modules/
+!/spec/dummy/log/.keep
+!/spec/dummy/tmp/.keep
+!/spec/dummy/tmp/pids/.keep
+!/spec/dummy/storage/.keep
+
+# Rails / assets
+/public/assets/
+/node_modules/
+/yarn-error.log
+/yarn-debug.log*
+.yarn-integrity
+/npm-debug.log*
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.key
+/config/master.key
+/spec/dummy/config/master.key
+/spec/dummy/config/credentials/*.key
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+.byebug_history
+.irb_history
+.ruby-gemset
+
+# RuboCop / tooling caches
+.rubocop-*_cache/
+tmp/rubocop/
+.cache/

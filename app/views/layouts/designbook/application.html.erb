@@ -8,6 +8,10 @@
   <%= yield :head %>
 
   <%= stylesheet_link_tag "designbook/application", media: "all" %>
+  <% if defined?(Lookbook) %>
+    <script src="/lookbook-assets/js/lookbook.js" defer></script>
+  <% end %>
+  <%= javascript_include_tag "designbook/application", defer: true %>
 </head>
 <body class="db-body">
 <main class="db-shell">
@@ -18,7 +22,7 @@
       <%= form.search_field :q, value: params[:q], placeholder: "Search docs", class: "db-search-input", aria: { label: "Search designbook" } %>
     <% end %>
 
-    <% catalog.section_tree.each do |section, pages| %>
+    <% catalog.section_tree.reject { |section, _pages| section == "help" }.each do |section, pages| %>
       <section class="db-nav-section">
         <p class="db-nav-heading"><%= section_title(section) %></p>
         <ul class="db-nav-list">
@@ -29,6 +33,13 @@
           <% end %>
         </ul>
       </section>
+    <% end %>
+
+    <% help_page = catalog.page_for_slug("help") %>
+    <% if help_page %>
+      <p class="db-sidebar-help">
+        <%= link_to "How to use Designbook", designbook_page_path_for(help_page), class: "db-sidebar-help-link#{current_page&.slug == help_page.slug ? " is-active" : ""}" %>
+      </p>
     <% end %>
   </aside>
 

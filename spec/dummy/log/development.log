@@ -1985,3 +1985,23 @@ Processing by Designbook::PagesController#show as HTML
 Completed 200 OK in 8ms (Views: 1.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 1.2ms)
 
 
+Started GET "/designbook/foundations/typography" for 127.0.0.1 at 2026-07-27 14:22:28 +0700
+Processing by Designbook::PagesController#show as HTML
+  Parameters: {"slug" => "foundations/typography"}
+  Rendering layout /Users/scott/scottharvey/designbook/app/views/layouts/designbook/application.html.erb
+  Rendering /Users/scott/scottharvey/designbook/app/views/designbook/pages/show.html.erb within layouts/designbook/application
+  Rendered /Users/scott/scottharvey/designbook/app/views/designbook/pages/show.html.erb within layouts/designbook/application (Duration: 0.6ms | GC: 0.0ms)
+  Rendered layout /Users/scott/scottharvey/designbook/app/views/layouts/designbook/application.html.erb (Duration: 3.0ms | GC: 0.0ms)
+Completed 200 OK in 12ms (Views: 3.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.8ms)
+
+
+Started GET "/designbook/foundations/color" for 127.0.0.1 at 2026-07-27 14:22:29 +0700
+Processing by Designbook::PagesController#show as HTML
+  Parameters: {"slug" => "foundations/color"}
+  Rendering layout /Users/scott/scottharvey/designbook/app/views/layouts/designbook/application.html.erb
+  Rendering /Users/scott/scottharvey/designbook/app/views/designbook/pages/show.html.erb within layouts/designbook/application
+  Rendered /Users/scott/scottharvey/designbook/app/views/designbook/pages/show.html.erb within layouts/designbook/application (Duration: 0.2ms | GC: 0.0ms)
+  Rendered layout /Users/scott/scottharvey/designbook/app/views/layouts/designbook/application.html.erb (Duration: 0.7ms | GC: 0.0ms)
+Completed 200 OK in 2ms (Views: 0.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+

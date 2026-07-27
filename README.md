@@ -25,6 +25,8 @@ Then run:
 bundle install
 ```
 
+
+
 ## Setup in host app
 
 ```bash
@@ -53,9 +55,12 @@ end
 
 ```ruby
 Designbook.configure do |config|
-  config.lookbook_preview_base_path = "/lookbook/inspect"
+  # Embed path = component preview only (not the full Lookbook inspector UI)
+  config.lookbook_preview_base_path = "/lookbook/embed"
 end
 ```
+
+
 
 ## Custom directives
 
@@ -73,11 +78,15 @@ Directive block parameters:
 - `body` - directive body text between opening and closing fences
 - `context` - `Designbook::DirectiveContext` with `current_slug`, `catalog`, and `configuration`
 
+
+
 ## Security model
 
 - Markdown is rendered with raw HTML disabled.
 - Directive output is sanitized with an allowlist before insertion.
 - Internal `.md` links are rewritten to mounted Designbook routes.
+
+
 
 ## Development checks
 
@@ -86,6 +95,3 @@ bundle exec rake test
 bin/rubocop
 ```
 
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

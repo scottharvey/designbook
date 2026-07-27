@@ -69,7 +69,7 @@ module Designbook
 
           base = context.configuration.lookbook_preview_base_path.to_s.sub(%r{/\z}, "")
           src = "#{base}/#{preview_id}"
-          %(<div class="db-component-preview"><iframe src="#{CGI.escapeHTML(src)}" loading="lazy" title="Component preview: #{CGI.escapeHTML(preview_id)}"></iframe></div>)
+          %(<div class="db-component-preview"><iframe class="db-preview-frame" src="#{CGI.escapeHTML(src)}" loading="lazy" title="Component preview: #{CGI.escapeHTML(preview_id)}"></iframe></div>)
         end
       end
     end
