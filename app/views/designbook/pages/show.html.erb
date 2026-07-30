@@ -1,47 +1,87 @@
 <% content_for :title, current_page.title %>
 
-<article class="db-article">
-  <% if breadcrumb_pages_for(current_page).any? %>
-    <nav aria-label="Breadcrumb" class="db-breadcrumbs">
-      <% breadcrumb_pages_for(current_page).each do |page| %>
-        <%= link_to page.title, designbook_page_path_for(page) %>
-        <span>/</span>
+<div class="db-page-layout<%= toc_entries.any? ? " has-toc" : "" %>">
+  <article class="db-article">
+    <% if breadcrumb_pages_for(current_page).any? %>
+      <nav aria-label="Breadcrumb" class="db-breadcrumbs">
+        <% breadcrumb_pages_for(current_page).each do |page| %>
+          <%= link_to page.title, designbook_page_path_for(page) %>
+          <span aria-hidden="true">/</span>
+        <% end %>
+        <span aria-current="page"><%= current_page.title %></span>
+      </nav>
+    <% end %>
+
+    <header class="db-article-header">
+      <% if current_page.pattern? %>
+        <p class="db-doc-type">Pattern</p>
       <% end %>
-      <span><%= current_page.title %></span>
+      <h1><%= current_page.title %></h1>
+      <% if current_page.description.present? %>
+        <p class="db-article-lede"><%= current_page.description %></p>
+      <% end %>
+      <%= render "designbook/pages/metadata", page: current_page %>
+      <% if current_page.pattern? %>
+        <%= render "designbook/pages/pattern_summary", page: current_page %>
+      <% end %>
+    </header>
+
+    <div class="db-markdown" data-db-markdown>
+      <%= @rendered_html %>
+    </div>
+
+    <% if related_pages.any? || backlinks.any? %>
+      <section class="db-graph" aria-label="Related documentation">
+        <% if related_pages.any? %>
+          <div class="db-related">
+            <h2>Related pages</h2>
+            <ul>
+              <% related_pages.each do |page| %>
+                <li><%= link_to page.title, designbook_page_path_for(page) %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <% if backlinks.any? %>
+          <div class="db-backlinks">
+            <h2>Referenced by</h2>
+            <ul>
+              <% backlinks.each do |page| %>
+                <li><%= link_to page.title, designbook_page_path_for(page) %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+
+    <nav class="db-prev-next" aria-label="Previous and next page">
+      <div>
+        <% if previous_page %>
+          <p class="db-prev-next-label">Previous</p>
+          <%= link_to previous_page.title, designbook_page_path_for(previous_page) %>
+        <% end %>
+      </div>
+      <div class="db-next-slot">
+        <% if next_page %>
+          <p class="db-prev-next-label">Next</p>
+          <%= link_to next_page.title, designbook_page_path_for(next_page) %>
+        <% end %>
+      </div>
     </nav>
-  <% end %>
+  </article>
 
-  <header class="db-article-header">
-    <h1><%= current_page.title %></h1>
-  </header>
-
-  <div class="db-markdown">
-    <%= @rendered_html %>
-  </div>
-
-  <% if backlinks.any? %>
-    <section class="db-backlinks" aria-label="Backlinks">
-      <h2>Linked from</h2>
-      <ul>
-        <% backlinks.each do |page| %>
-          <li><%= link_to page.title, designbook_page_path_for(page) %></li>
+  <% if toc_entries.any? %>
+    <nav class="db-toc" aria-label="On this page" data-db-toc>
+      <p class="db-toc-title">On this page</p>
+      <ul class="db-toc-list">
+        <% toc_entries.each do |entry| %>
+          <li class="db-toc-item db-toc-level-<%= entry.level %>">
+            <a href="#<%= entry.id %>" data-db-toc-link="<%= entry.id %>"><%= entry.text %></a>
+          </li>
         <% end %>
       </ul>
-    </section>
+    </nav>
   <% end %>
-
-  <nav class="db-prev-next" aria-label="Previous and next page">
-    <div>
-      <% if previous_page %>
-        <p class="db-prev-next-label">Previous</p>
-        <%= link_to previous_page.title, designbook_page_path_for(previous_page) %>
-      <% end %>
-    </div>
-    <div class="db-next-slot">
-      <% if next_page %>
-        <p class="db-prev-next-label">Next</p>
-        <%= link_to next_page.title, designbook_page_path_for(next_page) %>
-      <% end %>
-    </div>
-  </nav>
-</article>
+</div>

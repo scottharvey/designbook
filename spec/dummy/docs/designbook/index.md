@@ -1,6 +1,11 @@
 ---
 title: Introduction
 order: 1
+status: Stable
+version: 1.0
+tags:
+  - overview
+updated: 2026-07-27
 ---
 
 # Designbook
@@ -19,3 +24,6 @@ Documentation should evolve alongside the application, never as an afterthought.
 
 - [Philosophy](./philosophy/index.md)
 - [Typography](./foundations/typography.md)
+- [Color](./foundations/color.md)
+- [Tokens](./foundations/tokens.md)
+- [Word page](./patterns/word-page.md)

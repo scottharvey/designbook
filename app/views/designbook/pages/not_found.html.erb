@@ -1,0 +1,16 @@
+<% content_for :title, "Page not found" %>
+
+<article class="db-article db-empty-state">
+  <header class="db-article-header">
+    <p class="db-doc-type">404</p>
+    <h1>Page not found</h1>
+    <p class="db-article-lede">
+      That page is not in this Designbook. It may have moved, or the link may be out of date.
+    </p>
+  </header>
+
+  <p>
+    <%= link_to "Back to introduction", designbook.root_path, class: "db-button" %>
+    <button type="button" class="db-button db-button-ghost" data-db-open-palette>Search pages</button>
+  </p>
+</article>

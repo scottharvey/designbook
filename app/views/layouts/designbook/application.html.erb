@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-db-theme="system">
 <head>
-  <title><%= content_for?(:title) ? yield(:title) : "Designbook" %></title>
+  <title><%= content_for?(:title) ? "#{yield(:title)} · Designbook" : "Designbook" %></title>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
 
   <%= yield :head %>
 
@@ -12,40 +14,90 @@
     <script src="/lookbook-assets/js/lookbook.js" defer></script>
   <% end %>
   <%= javascript_include_tag "designbook/application", defer: true %>
+  <script type="application/json" id="db-search-index"><%= raw search_index_json %></script>
 </head>
-<body class="db-body">
+<body class="db-body" data-db-current-slug="<%= current_page&.slug %>">
+<a class="db-skip-link" href="#db-main">Skip to content</a>
+
 <main class="db-shell">
-  <aside class="db-sidebar">
-    <p class="db-sidebar-title">Designbook</p>
+  <aside class="db-sidebar" data-db-sidebar aria-label="Designbook navigation">
+    <div class="db-sidebar-header">
+      <p class="db-sidebar-title"><%= link_to "Designbook", designbook.root_path, class: "db-brand-link" %></p>
+      <div class="db-sidebar-tools">
+        <button type="button" class="db-icon-button" data-db-open-palette aria-label="Open command palette" title="Search (⌘K)">
+          <span aria-hidden="true">⌘K</span>
+        </button>
+        <button type="button" class="db-icon-button" data-db-theme-toggle aria-label="Toggle color theme">Theme</button>
+      </div>
+    </div>
 
-    <%= form_with url: designbook.search_path, method: :get, local: true, class: "db-search-form" do |form| %>
-      <%= form.search_field :q, value: params[:q], placeholder: "Search docs", class: "db-search-input", aria: { label: "Search designbook" } %>
-    <% end %>
+    <button type="button" class="db-command-trigger" data-db-open-palette>
+      <span>Search pages…</span>
+      <kbd>⌘K</kbd>
+    </button>
 
-    <% catalog.section_tree.reject { |section, _pages| section == "help" }.each do |section, pages| %>
-      <section class="db-nav-section">
-        <p class="db-nav-heading"><%= section_title(section) %></p>
-        <ul class="db-nav-list">
-          <% pages.each do |page| %>
-            <li>
-              <%= link_to page.title, designbook_page_path_for(page), class: "db-nav-link#{page == current_page ? " is-active" : ""}" %>
-            </li>
-          <% end %>
-        </ul>
-      </section>
-    <% end %>
+    <nav class="db-sidebar-nav" data-db-nav aria-label="Sections">
+      <% catalog.section_tree.reject { |section, _pages| section == "help" }.each do |section, pages| %>
+        <% expanded = nav_section_expanded?(section) %>
+        <section class="db-nav-section<%= expanded ? " is-expanded" : "" %>" data-db-nav-section="<%= section %>" data-expanded="<%= expanded %>">
+          <button
+            type="button"
+            class="db-nav-heading"
+            data-db-nav-toggle
+            aria-expanded="<%= expanded %>"
+            aria-controls="db-nav-<%= section %>"
+          >
+            <span><%= section_title(section) %></span>
+            <span class="db-nav-chevron" aria-hidden="true"></span>
+          </button>
+          <ul class="db-nav-list" id="db-nav-<%= section %>" <%= expanded ? "" : "hidden" %>>
+            <% pages.each do |page| %>
+              <li>
+                <%= link_to page.title,
+                            designbook_page_path_for(page),
+                            class: "db-nav-link#{page == current_page ? " is-active" : ""}",
+                            data: { db_nav_link: true, slug: page.slug },
+                            aria: { current: (page == current_page ? "page" : nil) } %>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </nav>
 
     <% help_page = catalog.page_for_slug("help") %>
     <% if help_page %>
       <p class="db-sidebar-help">
-        <%= link_to "How to use Designbook", designbook_page_path_for(help_page), class: "db-sidebar-help-link#{current_page&.slug == help_page.slug ? " is-active" : ""}" %>
+        <%= link_to "How to use Designbook",
+                    designbook_page_path_for(help_page),
+                    class: "db-sidebar-help-link#{current_page&.slug == help_page.slug ? " is-active" : ""}" %>
       </p>
     <% end %>
   </aside>
 
-  <section class="db-content">
+  <section class="db-content" id="db-main" tabindex="-1">
     <%= yield %>
   </section>
 </main>
+
+<div class="db-palette" data-db-palette hidden>
+  <div class="db-palette-backdrop" data-db-palette-close></div>
+  <div class="db-palette-dialog" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="db-palette-input-wrap">
+      <input
+        type="search"
+        class="db-palette-input"
+        data-db-palette-input
+        placeholder="Search pages…"
+        autocomplete="off"
+        spellcheck="false"
+        aria-controls="db-palette-results"
+      >
+    </div>
+    <div class="db-palette-section-label" data-db-palette-label>Recent</div>
+    <ul class="db-palette-results" id="db-palette-results" data-db-palette-results role="listbox"></ul>
+    <p class="db-palette-empty" data-db-palette-empty hidden>No matching pages.</p>
+  </div>
+</div>
 </body>
 </html>

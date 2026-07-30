@@ -9,40 +9,44 @@ Designbook is the living documentation for this product’s design system. It is
 
 ## Finding your way
 
-- Use the **sidebar** to move between sections and pages.
-- Use **search** at the top of the sidebar to find pages by title or content.
+- Use the **sidebar** to move between sections and pages. Sections collapse, and Designbook remembers your preference.
+- Press **⌘K** / **Ctrl+K** to open the command palette and jump to a page.
 - Use **Previous / Next** at the bottom of a page to read in order.
-- Follow **links inside pages** to related topics. Some pages also show **Linked from** when other pages point here.
+- Follow links inside pages to related topics. Pages automatically show **Related pages** and **Referenced by**.
 
 ## What you’ll find here
 
 Documentation covers the design language as a whole:
 
 - Philosophy and principles
-- Foundations such as typography and color
+- Foundations such as typography, color, and tokens
 - Components and patterns
 - Live examples where available
 
 Treat this as the shared reference for designers and engineers.
 
-## Reading tip
-
-Prefer the written principles and live examples over screenshots. When a page embeds a component preview, that preview is live — it reflects the current implementation.
-
-## Writing pages (for authors)
+## Writing pages
 
 Pages are Markdown files in Git. Each page starts with frontmatter:
 
 ```yaml
 ---
 title: Buttons
+status: Stable
+version: 1.1
+tags:
+  - forms
+  - actions
+updated: 2026-07-27
 order: 10
 ---
 ```
 
 - `title` is required
 - `order` is optional and controls sorting within a section
+- `status`, `version`, `tags`, and `updated` appear in the page metadata when present
 - Folders become URL paths and sidebar sections
+- Pages under `patterns/` (or `type: pattern`) are treated as pattern docs
 
 ### Linking
 
@@ -52,7 +56,17 @@ Prefer relative Markdown links so docs stay readable in Git:
 See [Typography](../foundations/typography.md)
 ```
 
-Absolute paths under the Designbook mount also work.
+## Directives
+
+Rich blocks use **directives**, not HTML. Write them with opening and closing `:::` fences:
+
+```md
+:::note
+Your text here.
+:::
+```
+
+Raw HTML in page bodies is disabled. Custom blocks are added as directives in Ruby; authors always write the Markdown fence.
 
 ### Callouts
 
@@ -65,35 +79,88 @@ Helpful context that is not a warning.
 A practical suggestion.
 :::
 
+:::info
+Neutral supporting context.
+:::
+
 :::warning
 Something easy to get wrong.
+:::
+
+:::success
+A confirmed good outcome.
 :::
 
 :::principle
 A design principle worth calling out.
 :::
+
+:::implementation
+How to build it in the product.
+:::
+
+:::accessibility
+Requirements for inclusive use.
+:::
+
+:::best-practice
+Preferred approach.
+:::
+
+:::anti-pattern
+Avoid this.
+:::
+
+:::future
+Planned direction.
+:::
+```
+
+### Tokens
+
+Render values from `config/design_tokens.yml`:
+
+```md
+:::tokens colours
+:::
+```
+
+Show every token group:
+
+```md
+:::tokens
+:::
 ```
 
 ### Live components
 
-If Lookbook is available, embed a preview:
+Embed a Lookbook preview. The preview id goes on the opening line; optional YAML in the body sets name, description, source, and params:
 
 ```md
-:::component ui/badge
+:::component button/default
+name: Button
+description: Primary action control
+source: app/components/button_component.rb
+params:
+  variant: primary
 :::
 ```
-
-Use the Lookbook preview path (for example `ui/badge`), not the full inspector URL.
 
 ### Screenshots
 
+Put image files in `docs/designbook/assets/`. They are served through Designbook auth at `/designbook/assets/...`, not from `public/`.
+
 ```md
-:::screenshot /path/to/image.png
+![Button anatomy](assets/button-anatomy.png)
+
+:::screenshot assets/button-anatomy.png
 :::
 ```
+
+Nested folders work too: `assets/foundations/color-ramp.png`.
 
 ## If something looks wrong
 
 - Missing pages usually means a Markdown file is missing, misnamed, or has invalid frontmatter.
 - Broken component embeds usually mean the Lookbook preview path is wrong, or Lookbook is not mounted.
-- Search only indexes the current docs tree — new files appear after refresh in development.
+- Search and the command palette index the current docs tree — new files appear after refresh in development.

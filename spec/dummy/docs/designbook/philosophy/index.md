@@ -1,18 +1,27 @@
 ---
 title: Philosophy
 order: 5
+status: Stable
+version: 1.0
+tags:
+  - principles
+updated: 2026-07-27
 ---
 
 # Philosophy
 
-Design should communicate intent, not just decoration.
+Designbook exists to make product decisions legible.
 
-:::warning
-Avoid adding UI elements purely for visual appeal. Every element should serve a purpose.
+:::principle
+Prefer shared language over one-off explanations.
 :::
 
-:::tip
-When in doubt, remove rather than add. Simplicity scales better than complexity.
+## Reading first
+
+Designbook is a book, not an admin console. Pages should reward careful reading.
+
+:::info
+Start with foundations, then components, then patterns that compose them.
 :::
 
-See also [Typography](../foundations/typography.md) for how type reinforces philosophy.
+See [Typography](../foundations/typography.md) and the [Word page](../patterns/word-page.md) pattern.

@@ -15,11 +15,11 @@ module Designbook
         See [Philosophy](../philosophy/index.md)
       MD
 
-      html = renderer.render(markdown, current_slug: "foundations/typography")
+      result = renderer.render(markdown, current_slug: "foundations/typography")
 
-      assert_includes html, "db-callout-note"
-      assert_includes html, "href=\"/designbook/philosophy\""
-      refute_includes html, ":::"
+      assert_includes result.html, "db-callout-note"
+      assert_includes result.html, "href=\"/designbook/philosophy\""
+      refute_includes result.html, ":::"
     end
 
     test "supports fenced code blocks after directives" do
@@ -35,11 +35,12 @@ module Designbook
         ```
       MD
 
-      html = renderer.render(markdown, current_slug: "index")
+      result = renderer.render(markdown, current_slug: "index")
 
-      assert_includes html, "db-principle"
-      assert_includes html, "<pre><code class=\"highlight\""
-      assert_includes html, "puts"
+      assert_includes result.html, "db-callout-principle"
+      assert_includes result.html, "<pre><code class=\"highlight\""
+      assert_includes result.html, "puts"
+      assert_includes result.html, "db-code-block"
     end
 
     test "does not render arbitrary raw html from markdown" do
@@ -50,10 +51,46 @@ module Designbook
         # Hello
       MD
 
-      html = renderer.render(markdown, current_slug: "index")
+      result = renderer.render(markdown, current_slug: "index")
 
-      refute_includes html, "<script>"
-      refute_includes html, "alert(\"xss\")"
+      refute_includes result.html, "<script>"
+      refute_includes result.html, "alert(\"xss\")"
+    end
+
+    test "builds a table of contents from headings" do
+      renderer = MarkdownRenderer.new
+
+      markdown = <<~MD
+        ## Spacing
+        ### Rhythm
+        #### Exceptions
+      MD
+
+      result = renderer.render(markdown, current_slug: "index")
+
+      assert_equal 3, result.toc.length
+      assert_equal "Spacing", result.toc.first.text
+      assert_includes result.html, 'id="spacing"'
+    end
+
+    test "leaves directives inside fenced code blocks as literal text" do
+      renderer = MarkdownRenderer.new
+
+      markdown = <<~MD
+        Example:
+
+        ```md
+        :::note
+        Helpful context.
+        :::
+        ```
+      MD
+
+      result = renderer.render(markdown, current_slug: "index")
+
+      refute_includes result.html, "db-callout-note"
+      assert_includes result.html, ":::note"
+      assert_includes result.html, "Helpful context."
     end
   end
 end

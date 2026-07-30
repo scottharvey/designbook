@@ -8,19 +8,34 @@ module Designbook
       def create_initializer
         if File.exist?("config/initializers/designbook.rb")
           say_status :skip, "config/initializers/designbook.rb already exists", :yellow
-          return
+        else
+          template "initializer.rb", "config/initializers/designbook.rb"
         end
+      end
 
-        template "initializer.rb", "config/initializers/designbook.rb"
+      def copy_design_tokens
+        if File.exist?("config/design_tokens.yml")
+          say_status :skip, "config/design_tokens.yml already exists", :yellow
+        else
+          template "design_tokens.yml", "config/design_tokens.yml"
+        end
       end
 
       def copy_docs
         if Dir.exist?("docs/designbook")
           say_status :skip, "docs/designbook already exists", :yellow
-          return
+        else
+          directory "docs/designbook", "docs/designbook"
         end
 
-        directory "docs/designbook", "docs/designbook"
+        assets_dir = "docs/designbook/assets"
+        assets_readme = File.join(assets_dir, "README.md")
+        if File.exist?(assets_readme)
+          say_status :skip, "#{assets_readme} already exists", :yellow
+        else
+          empty_directory assets_dir
+          template "docs/designbook/assets/README.md", assets_readme
+        end
       end
 
       def mount_engine

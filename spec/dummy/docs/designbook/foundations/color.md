@@ -1,18 +1,33 @@
 ---
 title: Color
 order: 11
+status: Stable
+version: 1.0
+tags:
+  - foundations
+  - colour
+updated: 2026-07-27
 ---
 
 # Color
 
-The palette is intentionally restrained.
+Color should support hierarchy and meaning without competing with content.
 
-:::principle
-Color draws attention. Use it sparingly so that when it appears, it means something.
+## Palette
+
+Prefer a small set of shared tokens over page-local hex values.
+
+:::tokens colours
 :::
 
-:::warning
-Never rely on color alone to convey meaning. Always pair with text or iconography for accessibility.
+## Usage
+
+:::accessibility
+Never rely on colour alone to communicate state. Pair colour with label, icon, or text.
 :::
 
-See also [Typography](./typography.md) for how color and type work together.
+:::implementation
+Pull values from `config/design_tokens.yml` rather than hardcoding them in components or markdown.
+:::
+
+See also [Typography](./typography.md) and [Tokens](./tokens.md).

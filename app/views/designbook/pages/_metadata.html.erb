@@ -1,0 +1,37 @@
+<% if page.metadata_present? %>
+  <dl class="db-page-meta">
+    <% if page.status.present? %>
+      <div class="db-page-meta-item">
+        <dt>Status</dt>
+        <dd><span class="db-status db-status-<%= page.status.parameterize %>"><%= page.status %></span></dd>
+      </div>
+    <% end %>
+
+    <% if page.version.present? %>
+      <div class="db-page-meta-item">
+        <dt>Version</dt>
+        <dd><%= page.version %></dd>
+      </div>
+    <% end %>
+
+    <% if page.updated.present? %>
+      <div class="db-page-meta-item">
+        <dt>Last updated</dt>
+        <dd><time datetime="<%= page.updated.iso8601 %>"><%= format_updated(page.updated) %></time></dd>
+      </div>
+    <% end %>
+
+    <% if page.tags.any? %>
+      <div class="db-page-meta-item db-page-meta-tags">
+        <dt>Tags</dt>
+        <dd>
+          <ul class="db-tag-list">
+            <% page.tags.each do |tag| %>
+              <li><span class="db-tag"><%= tag %></span></li>
+            <% end %>
+          </ul>
+        </dd>
+      </div>
+    <% end %>
+  </dl>
+<% end %>

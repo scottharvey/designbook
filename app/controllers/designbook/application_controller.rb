@@ -1,9 +1,13 @@
 module Designbook
   class ApplicationController < Designbook.configuration.parent_controller.constantize
-    helper_method :current_page
+    helper_method :current_page, :catalog
     before_action :authenticate_designbook!
 
     private
+
+    def catalog
+      @catalog ||= Designbook.catalog
+    end
 
     def current_page
       nil

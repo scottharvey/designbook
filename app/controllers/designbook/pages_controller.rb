@@ -1,15 +1,20 @@
 module Designbook
   class PagesController < ApplicationController
-    helper_method :catalog, :current_page, :previous_page, :next_page, :backlinks
+    helper_method :catalog, :current_page, :previous_page, :next_page, :backlinks, :related_pages, :toc_entries
+
+    rescue_from ActionController::RoutingError, with: :render_not_found
 
     def show
       @current_page = catalog.page_for_slug(params[:slug])
-      raise ActionController::RoutingError, "Not Found" unless @current_page
+      return render_not_found unless @current_page
 
       @previous_page = catalog.previous_page_for(@current_page.slug)
       @next_page = catalog.next_page_for(@current_page.slug)
       @backlinks = catalog.backlinks_for(@current_page.slug)
-      @rendered_html = MarkdownRenderer.new.render(@current_page.body_markdown, current_slug: @current_page.slug).html_safe
+      @related_pages = catalog.related_pages_for(@current_page)
+      result = MarkdownRenderer.new.render(@current_page.body_for_display, current_slug: @current_page.slug)
+      @rendered_html = result.html.html_safe
+      @toc_entries = result.toc
     end
 
     private
@@ -32,6 +37,20 @@ module Designbook
 
     def backlinks
       @backlinks || []
+    end
+
+    def related_pages
+      @related_pages || []
+    end
+
+    def toc_entries
+      @toc_entries || []
+    end
+
+    def render_not_found
+      @current_page = nil
+      @toc_entries = []
+      render "designbook/pages/not_found", status: :not_found
     end
   end
 end

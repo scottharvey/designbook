@@ -1,5 +1,6 @@
 require "yaml"
 require "set"
+require "date"
 
 module Designbook
   class Catalog
@@ -73,12 +74,39 @@ module Designbook
       pages.select { |page| @outbound_links[page.slug].include?(target) }
     end
 
+    def related_pages_for(page)
+      linked = @outbound_links[page.slug].filter_map { |slug| page_for_slug(slug) }
+      configured = page.related_slugs.filter_map { |slug| page_for_slug(slug) }
+      (configured + linked).uniq(&:slug).reject { |related| related.slug == page.slug }
+    end
+
+    def search_index
+      reading_pages.map do |page|
+        {
+          title: page.title,
+          slug: page.slug,
+          section: page.section,
+          path: page_path_for(page),
+          tags: page.tags,
+          excerpt: searchable_lines_for(page).first.to_s[0, 140]
+        }
+      end
+    end
+
     private
+
+    def page_path_for(page)
+      mount = Designbook.configuration.mount_path.to_s.sub(%r{/\z}, "")
+      page.slug == "index" ? mount.presence || "/" : "#{mount}/#{page.slug}"
+    end
 
     def load_docs_from(docs_root)
       return unless docs_root.exist?
 
+      assets_prefix = File.join(docs_root.to_s, Designbook.configuration.assets_dirname.to_s)
       docs_root.glob("**/*.md").sort.each do |path|
+        next if path.to_s.start_with?("#{assets_prefix}/") || path.to_s == assets_prefix
+
         add_page(path, docs_root, replace_existing: true)
       end
     end
@@ -103,7 +131,8 @@ module Designbook
         slug: slug,
         title: title,
         order: order,
-        body_markdown: content
+        body_markdown: content,
+        metadata: metadata
       )
 
       existing_index = @pages.index { |existing| existing.slug == slug }
@@ -132,7 +161,7 @@ module Designbook
       closing_index += 1
       yaml = lines[1...closing_index].join
       content = lines[(closing_index + 1)..]&.join.to_s
-      metadata = YAML.safe_load(yaml, permitted_classes: [], aliases: false) || {}
+      metadata = YAML.safe_load(yaml, permitted_classes: [Date, Time], aliases: false) || {}
       [metadata, content]
     end
 
@@ -144,7 +173,7 @@ module Designbook
     end
 
     def normalize_slug(slug)
-      base = slug.to_s.sub(%r{\A/}, "").sub(%r{/\z}, "")
+      base = slug.to_s.sub(%r{\A/}, "").sub(%r{/\z}, "").sub(%r{/index\z}, "")
       return "index" if base.empty?
 
       base
@@ -166,15 +195,16 @@ module Designbook
     end
 
     def sort_key_for(page)
-      [page.slug == "index" ? 0 : 1, page.section, page.order || 9_999, page.slug]
+      [page.slug == "index" ? 0 : 1, page.order || 9_999, page.section, page.slug]
     end
 
     def search_score_for(page, normalized_query)
       searchable_body = searchable_body_for(page)
       title_score = page.title.downcase.include?(normalized_query) ? 5 : 0
       slug_score = page.slug.downcase.include?(normalized_query) ? 3 : 0
+      tag_score = page.tags.any? { |tag| tag.downcase.include?(normalized_query) } ? 2 : 0
       body_score = searchable_body.include?(normalized_query) ? 1 : 0
-      title_score + slug_score + body_score
+      title_score + slug_score + tag_score + body_score
     end
 
     def excerpt_for(page, normalized_query)
@@ -195,7 +225,7 @@ module Designbook
     end
 
     def strip_directive_syntax(markdown)
-      markdown.gsub(/^\s*:::\w+(?:\s+[^\n]+)?\s*$|^\s*:::\s*$/, "")
+      markdown.gsub(/^\s*:::[\w-]+(?:\s+[^\n]+)?\s*$|^\s*:::\s*$/, "")
     end
 
     def cleanup_markdown_for_excerpt(line)

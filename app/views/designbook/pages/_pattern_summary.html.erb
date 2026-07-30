@@ -1,0 +1,19 @@
+<aside class="db-pattern-summary" aria-label="Pattern summary">
+  <% if page.purpose.present? %>
+    <div>
+      <h2>Purpose</h2>
+      <p><%= page.purpose %></p>
+    </div>
+  <% end %>
+
+  <% if page.components_used.any? %>
+    <div>
+      <h2>Components used</h2>
+      <ul>
+        <% page.components_used.each do |component| %>
+          <li><code><%= component %></code></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</aside>

@@ -1,0 +1,37 @@
+colours:
+  canvas: "#f7f5f1"
+  ink: "#1c1917"
+  accent: "#0f766e"
+  accent-soft: "#ccfbf1"
+  border: "#e7e0d5"
+  warning: "#b45309"
+  success: "#15803d"
+
+spacing:
+  xs: "0.25rem"
+  sm: "0.5rem"
+  md: "1rem"
+  lg: "1.5rem"
+  xl: "2.5rem"
+
+radius:
+  sm: "0.4rem"
+  md: "0.75rem"
+  full: "999px"
+
+elevation:
+  quiet: "0 1px 2px rgba(28, 25, 23, 0.06)"
+  raised: "0 18px 50px rgba(28, 25, 23, 0.12)"
+
+typography:
+  display: "Iowan Old Style, Palatino, Georgia, serif"
+  ui: "Avenir Next, Segoe UI, Helvetica Neue, sans-serif"
+  mono: "SFMono-Regular, ui-monospace, Menlo, monospace"
+  measure: "42rem"
+  body-size: "1.0625rem"
+  body-leading: "1.75"
+
+animation:
+  fast: "120ms ease"
+  medium: "200ms ease"
+  slow: "320ms ease"

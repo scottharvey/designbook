@@ -1,4 +1,7 @@
 require "cgi"
+require "date"
+require "yaml"
+require "set"
 require "commonmarker"
 require "rouge"
 require "securerandom"
@@ -7,19 +10,40 @@ require "rails-html-sanitizer"
 module Designbook
   class MarkdownRenderer
     DIRECTIVE_TOKEN_PREFIX = "DBDIRTOKEN".freeze
+    RenderResult = Struct.new(:html, :toc, keyword_init: true)
+
+    CALLOUT_DIRECTIVES = {
+      "note" => { title: "Note", kind: "note" },
+      "info" => { title: "Info", kind: "info" },
+      "tip" => { title: "Tip", kind: "tip" },
+      "warning" => { title: "Warning", kind: "warning" },
+      "success" => { title: "Success", kind: "success" },
+      "principle" => { title: "Principle", kind: "principle" },
+      "implementation" => { title: "Implementation", kind: "implementation" },
+      "accessibility" => { title: "Accessibility", kind: "accessibility" },
+      "best-practice" => { title: "Best practice", kind: "best-practice" },
+      "anti-pattern" => { title: "Anti-pattern", kind: "anti-pattern" },
+      "future" => { title: "Future", kind: "future" }
+    }.freeze
 
     SANITIZER = Rails::HTML5::SafeListSanitizer.new
     SANITIZER_TAGS = %w[
-      a aside blockquote br code div em figcaption figure iframe img li ol p pre
-      span strong ul
+      a aside blockquote br button code details div dl dt dd em figcaption figure
+      h2 h3 h4 iframe img input label li ol p pre span strong summary table tbody
+      td th thead tr ul
     ].freeze
     SANITIZER_ATTRIBUTES = %w[
-      alt aria-label class href loading src title target rel
+      alt aria-controls aria-expanded aria-hidden aria-label aria-labelledby
+      class data-db-param data-db-copy data-db-callout data-db-component
+      data-db-preview-base data-db-preview-id data-db-preview-controls
+      data-language href id loading name placeholder role src style title
+      type target rel value
     ].freeze
 
-    def initialize(registry: self.class.default_registry, catalog: Designbook.catalog)
+    def initialize(registry: self.class.default_registry, catalog: Designbook.catalog, tokens: nil)
       @registry = registry
       @catalog = catalog
+      @tokens = tokens
     end
 
     def render(markdown, current_slug: "index")
@@ -35,43 +59,42 @@ module Designbook
       html = to_html(with_placeholders)
       html = inject_directives(html, directive_store)
       highlighted = highlight_code_blocks(html)
-      rewrite_internal_links(highlighted)
+      linked = rewrite_internal_links(highlighted)
+      with_assets = rewrite_asset_sources(linked)
+      decorated, toc = TableOfContents.decorate(with_assets)
+
+      RenderResult.new(html: decorated, toc: toc)
     end
 
     def self.default_registry
       @default_registry ||= DirectiveRegistry.new.tap do |registry|
-        registry.register("note") do |_argument, body, _context|
-          %(<aside class="db-callout db-callout-note"><p class="db-callout-title">Note</p>#{MarkdownRenderer.to_html(body.to_s)}</aside>)
+        CALLOUT_DIRECTIVES.each do |name, config|
+          registry.register(name) do |_argument, body, _context|
+            MarkdownRenderer.callout_html(config[:kind], config[:title], body)
+          end
         end
 
-        registry.register("warning") do |_argument, body, _context|
-          %(<aside class="db-callout db-callout-warning"><p class="db-callout-title">Warning</p>#{MarkdownRenderer.to_html(body.to_s)}</aside>)
-        end
-
-        registry.register("tip") do |_argument, body, _context|
-          %(<aside class="db-callout db-callout-tip"><p class="db-callout-title">Tip</p>#{MarkdownRenderer.to_html(body.to_s)}</aside>)
-        end
-
-        registry.register("principle") do |_argument, body, _context|
-          %(<blockquote class="db-principle"><p class="db-principle-label">Principle</p>#{MarkdownRenderer.to_html(body.to_s)}</blockquote>)
-        end
-
-        registry.register("screenshot") do |argument, _body, _context|
+        registry.register("screenshot") do |argument, _body, context|
           path = argument.to_s.strip
           raise ArgumentError, "Missing screenshot path" if path.empty?
 
-          %(<figure class="db-screenshot"><img src="#{CGI.escapeHTML(path)}" alt="Screenshot: #{CGI.escapeHTML(path)}" loading="lazy" /><figcaption>#{CGI.escapeHTML(path)}</figcaption></figure>)
+          src = AssetPath.rewrite(path, current_slug: context.current_slug)
+          caption = path
+          %(<figure class="db-screenshot"><img src="#{CGI.escapeHTML(src)}" alt="Screenshot: #{CGI.escapeHTML(caption)}" loading="lazy" /><figcaption>#{CGI.escapeHTML(caption)}</figcaption></figure>)
         end
 
-        registry.register("component") do |argument, _body, context|
-          preview_id = argument.to_s.strip
-          raise ArgumentError, "Missing component preview id" if preview_id.empty?
+        registry.register("component") do |argument, body, context|
+          ComponentEmbed.render(argument: argument, body: body, context: context)
+        end
 
-          base = context.configuration.lookbook_preview_base_path.to_s.sub(%r{/\z}, "")
-          src = "#{base}/#{preview_id}"
-          %(<div class="db-component-preview"><iframe class="db-preview-frame" src="#{CGI.escapeHTML(src)}" loading="lazy" title="Component preview: #{CGI.escapeHTML(preview_id)}"></iframe></div>)
+        registry.register("tokens") do |argument, _body, context|
+          TokenRenderer.render(group: argument.to_s.strip, context: context)
         end
       end
+    end
+
+    def self.callout_html(kind, title, body)
+      %(<aside class="db-callout db-callout-#{kind}" data-db-callout="#{kind}"><p class="db-callout-title">#{CGI.escapeHTML(title)}</p>#{to_html(body.to_s)}</aside>)
     end
 
     def self.to_html(markdown)
@@ -97,12 +120,39 @@ module Designbook
     def render_directives(markdown, directive_store)
       lines = markdown.to_s.lines
       out = +""
+      in_code_fence = false
+      code_fence_marker = nil
 
       i = 0
       while i < lines.length
         line = lines[i]
 
-        open = line.match(/^\s*:::(\w+)(?:\s+([^\n]+))?\s*$/)
+        fence = line.match(/\A(\s*)(`{3,}|~{3,})([^\n]*)\n?\z/)
+        if fence
+          marker = fence[2]
+          info = fence[3].to_s.strip
+          if in_code_fence
+            if marker[0] == code_fence_marker[0] && marker.length >= code_fence_marker.length && info.empty?
+              in_code_fence = false
+              code_fence_marker = nil
+            end
+          else
+            in_code_fence = true
+            code_fence_marker = marker
+          end
+
+          out << line
+          i += 1
+          next
+        end
+
+        if in_code_fence
+          out << line
+          i += 1
+          next
+        end
+
+        open = line.match(/^\s*:::([\w-]+)(?:\s+([^\n]+))?\s*$/)
         unless open
           out << line
           i += 1
@@ -135,8 +185,6 @@ module Designbook
         directive_store[token] = sanitize_directive_html(rendered || directive_error_card("Unknown directive: #{name}"))
 
         out << "\n#{token}\n"
-
-        # Skip closing line
         i += 1
       end
 
@@ -171,8 +219,18 @@ module Designbook
       end
     end
 
+    def rewrite_asset_sources(html)
+      html.gsub(/src="([^"]+)"/) do
+        src = Regexp.last_match(1)
+        next %{src="#{src}"} unless AssetPath.asset_reference?(src)
+
+        %{src="#{CGI.escapeHTML(AssetPath.rewrite(src, current_slug: @current_slug))}"}
+      end
+    end
+
     def rewrite_href(href)
       return href if href.start_with?("http://", "https://", "#", "mailto:")
+
       mount_path = Designbook.configuration.mount_path.to_s
       if href.start_with?("#{mount_path}/")
         slug = normalize_slug(href.sub(%r{\A#{Regexp.escape(mount_path)}/?}, "").sub(%r{\.md\z}, ""))
@@ -210,10 +268,6 @@ module Designbook
     end
 
     def highlight_code_blocks(html)
-      # Commonmarker 2.x emits either:
-      #   <pre><code class="language-ruby">...</code></pre>
-      # or with github_pre_lang:
-      #   <pre lang="ruby"><code>...</code></pre>
       html.gsub(%r{<pre(?:\s+lang="([^"]+)")?><code(?:\s+class="language-([^"]+)")?>(.*?)</code></pre>}m) do
         language_from_lang = Regexp.last_match(1)
         language_from_class = Regexp.last_match(2)
@@ -222,8 +276,6 @@ module Designbook
             language_from_lang
           elsif language_from_class && !language_from_class.to_s.strip.empty?
             language_from_class
-          else
-            nil
           end
         code = CGI.unescapeHTML(Regexp.last_match(3).to_s)
         lexer = if language
@@ -232,7 +284,8 @@ module Designbook
           Rouge::Lexers::PlainText.new
         end
         formatter = Rouge::Formatters::HTML.new
-        %(<pre><code class="highlight">#{formatter.format(lexer.lex(code))}</code></pre>)
+        label = language ? CGI.escapeHTML(language) : "code"
+        %(<div class="db-code-block" data-language="#{label}"><button type="button" class="db-copy-button" data-db-copy aria-label="Copy code">Copy</button><pre><code class="highlight">#{formatter.format(lexer.lex(code))}</code></pre></div>)
       end
     end
 

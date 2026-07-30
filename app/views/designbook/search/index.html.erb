@@ -4,14 +4,17 @@
   <header class="db-article-header">
     <h1>Search</h1>
     <% if active_search?(query) %>
-      <p>Showing results for <strong><%= query %></strong>.</p>
+      <p class="db-article-lede">Showing results for <strong><%= query %></strong>.</p>
     <% else %>
-      <p>Type in the sidebar search field to find pages.</p>
+      <p class="db-article-lede">Use the command palette (⌘K) or type a query to find pages.</p>
     <% end %>
   </header>
 
   <% if active_search?(query) && grouped_results.empty? %>
-    <p>No results found.</p>
+    <div class="db-empty-state">
+      <p>No pages matched that query.</p>
+      <button type="button" class="db-button" data-db-open-palette>Try the command palette</button>
+    </div>
   <% end %>
 
   <% grouped_results.each do |section, results| %>
@@ -21,7 +24,7 @@
         <% results.each do |result| %>
           <li>
             <%= link_to result.page.title, designbook_page_path_for(result.page) %>
-            <p><%= result.excerpt %></p>
+            <p><%= highlight_search_excerpt(result.excerpt, query) %></p>
           </li>
         <% end %>
       </ul>
