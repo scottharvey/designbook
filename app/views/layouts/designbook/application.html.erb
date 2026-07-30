@@ -1,6 +1,58 @@
 <!DOCTYPE html>
-<html lang="en" data-db-theme="system">
+<html lang="en" data-db-theme="<%= designbook_theme_preference %>" class="<%= designbook_root_html_class %>">
 <head>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      root.classList.add("db-booting");
+
+      function writeCookie(name, value) {
+        document.cookie = name + "=" + encodeURIComponent(value) +
+          "; path=/; max-age=31536000; SameSite=Lax";
+      }
+
+      try {
+        var theme = window.localStorage.getItem("designbook:theme") || root.getAttribute("data-db-theme") || "system";
+        if (theme !== "light" && theme !== "dark" && theme !== "system") theme = "system";
+        root.setAttribute("data-db-theme", theme);
+        writeCookie("designbook_theme", theme);
+
+        var dark = theme === "dark" ||
+          (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        root.style.colorScheme = dark ? "dark" : "light";
+        root.style.backgroundColor = dark ? "#141210" : "#f7f5f1";
+
+        var collapsed = window.localStorage.getItem("designbook:sidebar-collapsed");
+        if (collapsed === null) {
+          collapsed = root.classList.contains("db-sidebar-collapsed") ? "1" : "0";
+        }
+        root.classList.toggle("db-sidebar-collapsed", collapsed === "1");
+        writeCookie("designbook_sidebar", collapsed === "1" ? "1" : "0");
+        window.localStorage.setItem("designbook:sidebar-collapsed", collapsed === "1" ? "1" : "0");
+        window.localStorage.setItem("designbook:theme", theme);
+      } catch (_error) {}
+    })();
+  </script>
+  <style>
+    html, body { background-color: #f7f5f1; }
+    html[data-db-theme="dark"],
+    html[data-db-theme="dark"] body { background-color: #141210; }
+    @media (prefers-color-scheme: dark) {
+      html[data-db-theme="system"],
+      html[data-db-theme="system"] body { background-color: #141210; }
+    }
+    html.db-booting .db-shell { transition: none !important; }
+    html.db-sidebar-collapsed .db-shell {
+      display: grid;
+      grid-template-columns: 2.75rem minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    html.db-sidebar-collapsed .db-sidebar { display: none !important; }
+    html.db-sidebar-collapsed .db-sidebar-rail,
+    html.db-sidebar-collapsed .db-sidebar-rail[hidden] {
+      display: flex !important;
+    }
+  </style>
   <title><%= content_for?(:title) ? "#{yield(:title)} · Designbook" : "Designbook" %></title>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
@@ -19,15 +71,23 @@
 <body class="db-body" data-db-current-slug="<%= current_page&.slug %>">
 <a class="db-skip-link" href="#db-main">Skip to content</a>
 
-<main class="db-shell">
+<main class="db-shell" data-db-shell>
   <aside class="db-sidebar" data-db-sidebar aria-label="Designbook navigation">
     <div class="db-sidebar-header">
       <p class="db-sidebar-title"><%= link_to "Designbook", designbook.root_path, class: "db-brand-link" %></p>
       <div class="db-sidebar-tools">
-        <button type="button" class="db-icon-button" data-db-open-palette aria-label="Open command palette" title="Search (⌘K)">
-          <span aria-hidden="true">⌘K</span>
+        <button
+          type="button"
+          class="db-icon-button db-sidebar-collapse"
+          data-db-sidebar-toggle
+          aria-expanded="<%= designbook_sidebar_collapsed? ? "false" : "true" %>"
+          aria-label="<%= designbook_sidebar_collapsed? ? "Show navigation" : "Hide navigation" %>"
+          title="<%= designbook_sidebar_collapsed? ? "Show navigation" : "Hide navigation" %>"
+        >
+          <svg class="db-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M6.5 3.5 2 8l4.5 4.5M2.5 8h11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
-        <button type="button" class="db-icon-button" data-db-theme-toggle aria-label="Toggle color theme">Theme</button>
       </div>
     </div>
 
@@ -65,15 +125,36 @@
       <% end %>
     </nav>
 
-    <% help_page = catalog.page_for_slug("help") %>
-    <% if help_page %>
-      <p class="db-sidebar-help">
-        <%= link_to "How to use Designbook",
-                    designbook_page_path_for(help_page),
-                    class: "db-sidebar-help-link#{current_page&.slug == help_page.slug ? " is-active" : ""}" %>
+    <div class="db-sidebar-help">
+      <% help_page = catalog.page_for_slug("help") %>
+      <% if help_page %>
+        <p>
+          <%= link_to "How to use Designbook",
+                      designbook_page_path_for(help_page),
+                      class: "db-sidebar-help-link#{current_page&.slug == help_page.slug ? " is-active" : ""}" %>
+        </p>
+      <% end %>
+      <p>
+        <button type="button" class="db-sidebar-help-link db-sidebar-theme" data-db-theme-toggle aria-label="Theme: <%= designbook_theme_preference %>">
+          Theme
+        </button>
       </p>
-    <% end %>
+    </div>
   </aside>
+
+  <div class="db-sidebar-rail" data-db-sidebar-rail <%= designbook_sidebar_collapsed? ? "" : "hidden" %>>
+    <button
+      type="button"
+      class="db-icon-button db-sidebar-expand"
+      data-db-sidebar-expand
+      aria-label="Show navigation"
+      title="Show navigation"
+    >
+      <svg class="db-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M2 3.25h12M2 8h12M2 12.75h12M5.25 3.25v9.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
 
   <section class="db-content" id="db-main" tabindex="-1">
     <%= yield %>

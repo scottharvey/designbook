@@ -3,7 +3,8 @@
     collapsed: "designbook:nav-collapsed",
     recent: "designbook:recent-pages",
     last: "designbook:last-page",
-    theme: "designbook:theme"
+    theme: "designbook:theme",
+    sidebar: "designbook:sidebar-collapsed"
   };
 
   function ready(fn) {
@@ -135,10 +136,18 @@
     });
   }
 
+  function writePreferenceCookie(name, value) {
+    document.cookie = name + "=" + encodeURIComponent(value) +
+      "; path=/; max-age=31536000; SameSite=Lax";
+  }
+
   function initTheme() {
     var root = document.documentElement;
     var saved = window.localStorage.getItem(STORAGE.theme) || "system";
-    root.setAttribute("data-db-theme", saved);
+    if (root.getAttribute("data-db-theme") !== saved) {
+      root.setAttribute("data-db-theme", saved);
+    }
+    writePreferenceCookie("designbook_theme", saved);
 
     document.querySelectorAll("[data-db-theme-toggle]").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -146,6 +155,7 @@
         var next = current === "light" ? "dark" : current === "dark" ? "system" : "light";
         root.setAttribute("data-db-theme", next);
         window.localStorage.setItem(STORAGE.theme, next);
+        writePreferenceCookie("designbook_theme", next);
         button.setAttribute("aria-label", "Theme: " + next);
       });
     });
@@ -505,13 +515,63 @@
     document.body.removeChild(area);
   }
 
+  function initSidebarCollapse() {
+    var root = document.documentElement;
+    var shell = document.querySelector("[data-db-shell]");
+    if (!shell) return;
+
+    var rail = document.querySelector("[data-db-sidebar-rail]");
+    var expandButton = document.querySelector("[data-db-sidebar-expand]");
+    var collapsed = root.classList.contains("db-sidebar-collapsed") ||
+      window.localStorage.getItem(STORAGE.sidebar) === "1";
+
+    function setCollapsed(next) {
+      root.classList.toggle("db-sidebar-collapsed", next);
+      if (rail) rail.hidden = !next;
+      window.localStorage.setItem(STORAGE.sidebar, next ? "1" : "0");
+      writePreferenceCookie("designbook_sidebar", next ? "1" : "0");
+      document.querySelectorAll("[data-db-sidebar-toggle]").forEach(function (button) {
+        button.setAttribute("aria-expanded", next ? "false" : "true");
+        button.setAttribute("aria-label", next ? "Show navigation" : "Hide navigation");
+        button.title = next ? "Show navigation" : "Hide navigation";
+      });
+      if (expandButton) {
+        expandButton.setAttribute("aria-label", "Show navigation");
+        expandButton.title = "Show navigation";
+      }
+    }
+
+    setCollapsed(collapsed);
+
+    document.querySelectorAll("[data-db-sidebar-toggle]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setCollapsed(!root.classList.contains("db-sidebar-collapsed"));
+      });
+    });
+
+    if (expandButton) {
+      expandButton.addEventListener("click", function () {
+        setCollapsed(false);
+      });
+    }
+  }
+
   ready(function () {
     initTheme();
     initSidebar();
+    initSidebarCollapse();
     initCommandPalette();
     initToc();
     initCopyButtons();
     initPreviewFrames();
     initPreviewControls();
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var root = document.documentElement;
+        root.classList.remove("db-booting");
+        root.style.backgroundColor = "";
+      });
+    });
   });
 })();

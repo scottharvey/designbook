@@ -93,6 +93,21 @@ module Designbook
       current_section_key == section
     end
 
+    def designbook_theme_preference
+      theme = cookies[:designbook_theme].to_s
+      %w[light dark system].include?(theme) ? theme : "system"
+    end
+
+    def designbook_sidebar_collapsed?
+      cookies[:designbook_sidebar] == "1"
+    end
+
+    def designbook_root_html_class
+      classes = [ "db-booting" ]
+      classes << "db-sidebar-collapsed" if designbook_sidebar_collapsed?
+      classes.join(" ")
+    end
+
     private
 
     def normalize_designbook_slug(slug)
