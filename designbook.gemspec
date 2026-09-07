@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name        = "designbook"
   spec.version     = Designbook::VERSION
   spec.authors     = [ "Scott Harvey" ]
-  spec.email       = [ "hello@example.com" ]
+  spec.email       = [ "scott@scottharvey.co" ]
   spec.homepage    = "https://github.com/scottharvey/designbook"
   spec.summary     = "Rails engine for markdown-first design documentation."
   spec.description = "Designbook is a mountable Rails engine for writing and browsing design system documentation alongside live component previews."

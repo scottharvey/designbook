@@ -2,6 +2,8 @@
 
 Designbook is a mountable Rails engine for markdown-first design documentation.
 
+Built for my own Rails apps and shared as-is. Issues and pull requests are welcome, but there is no support commitment and the API may change between minor versions.
+
 It provides a reading experience closer to Rails Guides or Polaris than an admin console:
 
 - Markdown pages with YAML frontmatter
@@ -158,3 +160,7 @@ Use these from the host app when linking into Designbook:
 bundle exec rake test
 bin/rubocop
 ```
+
+## License
+
+MIT. See `MIT-LICENSE`.
